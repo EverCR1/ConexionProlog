@@ -34,6 +34,9 @@
 </div>
 
 <?php
+
+// $objetos = [pedro, juan];
+// $relaciones = [padre];
 if (isset($_POST['submit'])) {
     // Obtener los nombres ingresados por el usuario
     $nombre1 = $_POST['nombre1'];
@@ -53,6 +56,7 @@ if (isset($_POST['submit'])) {
     } else {
         echo "<div class='resultado negativo'>$nombre1 y $nombre2 no tienen la relación '$relacion'</div>";
     }
+
 }
 ?>
 </body>

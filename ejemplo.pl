@@ -10,16 +10,18 @@ progenitor(juan,jose).
 progenitor(raquel,miguel).
 mujer(maria).
 mujer(teresa).
-mujer(maria).
 mujer(raquel).
 mujer(elena).
 hombre(pedro).
 hombre(juan).
 hombre(jose).
 hombre(miguel).
-progenitorhijo(X,W) :- progenitor(X,W), write('true'), nl.
-madre(X,W) :- progenitor(X,W), mujer(X), write('true'), nl.
-padre(X,W) :- progenitor(X,W), hombre(X), write('true'), nl.
-hermanos(X,Y) :- progenitor(W,X), progenitor(W,Y), X \= Y, write('true'), nl.
-tio(X,W) :- hermanos(Y,X), progenitor(Y,W), hombre(X), write('true'), nl.
-tia(X,W) :- hermanos(Y,X), progenitor(Y,W), mujer(X), write('true'), nl.
+hombre(rodolfo).
+progenitorhijo(X,W) :- progenitor(X,W), write('true').
+madre(X,W) :- progenitor(X,W), mujer(X), write('true'), nl, write(X), nl, write(W).
+padre(X,W) :- progenitor(X,W), hombre(X), write('true'), nl, write(X), nl, write(W).
+hermano(X,Y)  :- progenitor(W,X), progenitor(W,Y), X \= Y, hombre(X), write('true').
+hermana(X,Y)  :- progenitor(W,X), progenitor(W,Y), X \= Y, mujer(X), write('true').
+hermanos(X,Y) :- progenitor(W,X), progenitor(W,Y), X \= Y, write('true').
+tio(X,W) :- hermanos(Y,X), progenitor(Y,W), hombre(X), write('true').
+tia(X,W) :- hermanos(Y,X), progenitor(Y,W), mujer(X), write('true').
