@@ -1,8 +1,8 @@
 <?php
 // Definir los sinónimos de las relaciones
 $sinonimos_relaciones = array(
-    "papá" => "padre", "papi" => "padre", "pa" => "padre", "papa" => "padre", // Sinónimos de Padre
-    "mamá" => "madre", "mami" => "madre", "ma" => "madre", "mama" => "madre", // Sinónimos de Madre
+    "papá" => "padre", "papi" => "padre", "papito" => "padre", "pa" => "padre", "papa" => "padre", // Sinónimos de Padre
+    "mamá" => "madre", "mami" => "madre", "mamita" => "madre", "ma" => "madre", "mama" => "madre", // Sinónimos de Madre
     "hermanito" => "hermano", "brother" => "hermano", "bro" => "hermano", // Sinónimos de Hermano
     "hermanita" => "hermana", "sister" => "hermana", // Sinónimos de Hermana
     "tío" => "tio", // Sinónimos de Tío
@@ -24,11 +24,22 @@ function procesarMensaje($mensaje) {
     foreach ($palabras as $index => $palabra) {
         if ($palabra && ($palabra !== 'es' && $palabra !== 'de')) { 
             if ($palabra === 'quién') {
-                // Si se encuentra la palabra "quién", reemplazarla por una variable X en la consulta Prolog
-                $objetos[] = 'X';
-                // Verificar si la palabra siguiente es una relación conocida
-                if (isset($palabras[$index + 1]) && in_array($palabras[$index + 1], $relaciones)) {
-                    $relacion = $palabras[$index + 1];
+                // Verificar si "quién" aparece antes de "es" o después de "de"
+                if ($index > 0 && $palabras[$index - 1] !== 'es') {
+                    // Si "quién" aparece después de "de", tomarla como W
+                    $objetos[] = 'W';
+                    // Verificar si la palabra anterior es una relación conocida
+                    if (isset($palabras[$index - 1]) && in_array($palabras[$index - 1], $relaciones)) {
+                        $relacion = $palabras[$index - 1];
+                    }
+                    continue; // Saltar al siguiente ciclo
+                } else {
+                    // Si "quién" aparece antes de "es", tomarla como X
+                    $objetos[] = 'X';
+                    // Verificar si la palabra siguiente es una relación conocida
+                    if (isset($palabras[$index + 1]) && in_array($palabras[$index + 1], $relaciones)) {
+                        $relacion = $palabras[$index + 1];
+                    }
                 }
             } elseif (isset($sinonimos_relaciones[$palabra])) {
                 $relacion = $sinonimos_relaciones[$palabra];
@@ -42,6 +53,7 @@ function procesarMensaje($mensaje) {
 
     return ['relacion' => $relacion, 'objetos' => $objetos];
 }
+
 
 // Función para ejecutar la consulta a Prolog
 function ejecutarConsultaProlog($consulta) {
@@ -58,26 +70,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $relacion = $datos_procesados['relacion'];
         $objetos = $datos_procesados['objetos'];
 
-        // Si la consulta contiene la palabra "quién", reemplazarla por una variable X en la consulta Prolog
-        if (in_array('X', $objetos)) {
-            $consulta_prolog = $relacion . '(X,' . implode(',', array_slice($objetos, 1)) . ').';
-        } else {
-            $consulta_prolog = $relacion . '(' . implode(',', $objetos) . ').';
-        }
+        // Construir la consulta Prolog
+        $consulta_prolog = $relacion . '(' . implode(',', $objetos) . ').';
         
+        // Ejecutar la consulta Prolog
         $output = ejecutarConsultaProlog($consulta_prolog);
-        //echo $output;
+        
+        // Analizar la salida de Prolog para extraer los valores de X y W
+        // Analizar la salida de Prolog para extraer los valores de X y W
+        $valores = [];
         if (strpos($output, "true") !== false) {
-            // Si la consulta contiene una variable X, obtenemos el valor de X de la respuesta de Prolog
+            // Si la consulta tiene la palabra "quién", verificar si hay valores de X o W en la respuesta
             if (in_array('X', $objetos)) {
-                // Obtener el segundo valor después de un salto de línea en la salida de Prolog
-                $lineas = explode("\n", $output);
-                if (isset($lineas[1])) {
-                    $valor_X = trim($lineas[1]); // Trim para eliminar espacios en blanco adicionales
-                    $mensaje_respuesta = $valor_X ;
-                } else {
-                    $mensaje_respuesta = "No tengo conocimiento sobre eso";
+                if (strpos($output, 'X=') !== false) {
+                    // Extraer el valor de X
+                    preg_match("/X=(\w+)/", $output, $matches);
+                    if (isset($matches[1])) {
+                        $valores['X'] = $matches[1];
+                    }
                 }
+            }
+            if (in_array('W', $objetos)) {
+                if (strpos($output, 'W=') !== false) {
+                    // Extraer todos los valores de W
+                    preg_match_all("/W=(\w+)/", $output, $matches);
+                    if (isset($matches[1])) {
+                        $valores['W'] = $matches[1];
+                    }
+                }
+            }
+
+            // Construir el mensaje de respuesta
+            if (isset($valores['X'])) {
+                $mensaje_respuesta = $valores['X'];
+            } elseif (isset($valores['W'])) {
+                // Imprimir todos los valores de W
+                $mensaje_respuesta = implode(', ', $valores['W']);
             } else {
                 $mensaje_respuesta = "Sí, tienen la relación '$relacion' \n ¿Puedo ayudarte nuevamente?";
             }
@@ -85,8 +113,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $mensaje_respuesta = "No tengo conocimiento sobre eso";
         }
 
+
         echo $mensaje_respuesta;
         exit();
     }
 }
+
 

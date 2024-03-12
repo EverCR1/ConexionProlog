@@ -18,8 +18,9 @@ hombre(jose).
 hombre(miguel).
 hombre(rodolfo).
 progenitorhijo(X,W) :- progenitor(X,W), write('true').
-madre(X,W) :- progenitor(X,W), mujer(X), write('true'), nl, write(X), nl, write(W).
-padre(X,W) :- progenitor(X,W), hombre(X), write('true'), nl, write(X), nl, write(W).
+madre(X,W) :- progenitor(X,W), mujer(X), write('true'), write(','), write('X='), write(X), write(','), write('W='), write(W).
+# padre(X,W) :- progenitor(X,W), hombre(X), write('true'), write(','), write('X='), write(X), write(','), write('W='), write(W).
+padre(X, W) :- progenitor(X, W), hombre(X), write('true,'), write('X='), write(X), write(','), write('W='), write(W), nl, fail.
 hermano(X,Y)  :- progenitor(W,X), progenitor(W,Y), X \= Y, hombre(X), write('true').
 hermana(X,Y)  :- progenitor(W,X), progenitor(W,Y), X \= Y, mujer(X), write('true').
 hermanos(X,Y) :- progenitor(W,X), progenitor(W,Y), X \= Y, write('true').
